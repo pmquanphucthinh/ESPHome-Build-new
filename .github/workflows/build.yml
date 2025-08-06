@@ -32,4 +32,4 @@ jobs:
         uses: actions/upload-artifact@v4   # Đã cập nhật từ v3 -> v4
         with:
           name: voiceassistant-firmware
-          path: build_output/voiceassistant.bin
+          path: build_output/firmware.factory.bin
