@@ -189,14 +189,14 @@ microphone:
     i2s_din_pin: GPIO10 #SD module mic
     pdm: false
     channel: left #đổi right thành left nếu nói mic không nhận
-    bits_per_sample: 32
+    bits_per_sample: 32bit
 
 speaker:
   - platform: i2s_audio
     id: box_speaker
     sample_rate: 48000
     i2s_mode: primary
-    bits_per_sample: 16
+    bits_per_sample: 16bit
     dac_type: external
     i2s_audio_id: i2s_out
     i2s_dout_pin: GPIO17 #DIN module Loa
@@ -215,12 +215,12 @@ speaker:
     id: announcement_resampling_speaker
     output_speaker: announcement_mixing_input
     sample_rate: 48000
-    bits_per_sample: 16
+    bits_per_sample: 16bit
   - platform: resampler
     id: media_resampling_speaker
     output_speaker: media_mixing_input
     sample_rate: 48000
-    bits_per_sample: 16
+    bits_per_sample: 16bit
 media_player:
   - platform: speaker
     id: box_media
