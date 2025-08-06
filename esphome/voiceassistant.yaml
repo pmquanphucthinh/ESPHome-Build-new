@@ -1,4 +1,4 @@
-#đây là bản có media loa to đại bác nhưng không có ting khi gọi nabu
+#đây là bản có media nhưng loa hơi nhỏ và có ting khi gọi nabu
 substitutions:
   name: "voiceassistant"
   friendly_name: ESP32S3 Assistant
@@ -39,9 +39,8 @@ esp32:
   flash_size: 16MB
   framework:
     type: esp-idf
-    version: 4.4.8
-    platform_version: 5.4.0
-    sdkconfig_options:   
+    version: recommended 
+    sdkconfig_options:    
       CONFIG_ESP32_S3_BOX_BOARD: "y"  
       CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
       CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "512" 
@@ -59,12 +58,7 @@ esp32:
       CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
       CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
       CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
-external_components:
-  - source:
-      type: git
-      url: https://github.com/smarthomeblack/esphome_audio
-      ref: main
-    components: [ adf_pipeline, i2s_audio ]
+
 psram:
   mode: octal
   speed: 80MHz
@@ -87,7 +81,6 @@ web_server:
     username: "admin"
     password: "11223344"
 wifi:
-  use_address: 192.168.1.99
   ssid: DiemQuanHome
   password: Q68686868
   output_power: 8.5dB
@@ -113,8 +106,7 @@ light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
     pin: GPIO9
-    num_leds: 30 #thay thành số lượng led bạn có
-    rmt_channel: 0
+    num_leds: 31 #thay thành số lượng led bạn có
     chipset: WS2812
     name: "Status LED"
     id: led_strip
@@ -164,65 +156,101 @@ micro_wake_word:
         then:
           - logger.log: "MICRO WAKE WORD - CONTINUOUS"
           - lambda: id(va).set_use_wake_word(false);
+          - script.execute:
+              id: play_sound
+              priority: true
+              sound_file: !lambda return id(wake_word_triggered_sound);
+          - delay: 300ms
           - voice_assistant.start_continuous:
         else:
           - logger.log: "MICRO WAKE WORD - START"
           - lambda: id(va).set_use_wake_word(false);
+          - script.execute:
+              id: play_sound
+              priority: true
+              sound_file: !lambda return id(wake_word_triggered_sound);
+          - delay: 300ms
           - voice_assistant.start:
              wake_word: !lambda return wake_word;
  
-
 i2s_audio:
   - id: i2s_in
-    i2s_lrclk_pin: GPIO8 # ws: "GPIO6" # INMP441 - WS "GPIO9"
-    i2s_bclk_pin: GPIO18 # sck: "GPIO5" # INMP441 - SCK "GPIO11"
-
+    i2s_lrclk_pin: GPIO8  #WS module mic
+    i2s_bclk_pin: GPIO18  #SCK module mic
   - id: i2s_out
-    i2s_lrclk_pin: GPIO15 # lrclk: "GPIO15" # MAX98357A - LRCLK "GPIO21"
-    i2s_bclk_pin: GPIO16  # bclk: "GPIO16"  # MAX98357A - BCLK "GPIO17"
-
-adf_pipeline:
-  - platform: i2s_audio
-    type: audio_out
-    id: adf_i2s_out
-    i2s_audio_id: i2s_out
-    i2s_dout_pin: GPIO17 # din:"GPIO17" # MAX98357A - DIN "GPIO15"
-
-  - platform: i2s_audio
-    type: audio_in
-    id: adf_i2s_in
-    i2s_audio_id: i2s_in
-    i2s_din_pin: GPIO10  # sd:"GPIO4" # INMP441 - SD "GPIO12"
-    pdm: false
-    channel: left     # "left"# INMP441 - L/R (GND = left / 3.3v = right)
-    sample_rate: 16000
-    bits_per_sample: 32bit
-
+    i2s_lrclk_pin: GPIO15  #LRC module loa
+    i2s_bclk_pin: GPIO16   #BLCK module loa
+    #sample_rate: 48000
 microphone:
-  - platform: adf_pipeline
+  - platform: i2s_audio
     id: box_mic
-    gain_log2: 3
-    keep_pipeline_alive: false
-    pipeline:
-      - adf_i2s_in
-      - self
+    adc_type: external
+    i2s_audio_id: i2s_in
+    i2s_din_pin: GPIO10 #SD module mic
+    pdm: false
+    channel: left #đổi right thành left nếu nói mic không nhận
+    bits_per_sample: 32
+
+speaker:
+  - platform: i2s_audio
+    id: box_speaker
+    sample_rate: 48000
+    i2s_mode: primary
+    bits_per_sample: 16
+    dac_type: external
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: GPIO17 #DIN module Loa
+    channel: mono
+    buffer_duration: 1000ms
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: box_speaker
+    num_channels: 2
+    source_speakers:
+      - id: announcement_mixing_input
+        timeout: never
+      - id: media_mixing_input
+        timeout: never
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
 media_player:
-  - platform: adf_pipeline
+  - platform: speaker
     id: box_media
-    name: S3 Mèo Media
-    keep_pipeline_alive: true
-    internal: false
-    pipeline:
-      - self
-      - resampler
-      - adf_i2s_out
+    name: S3 Media Player
+    internal: False
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.95
+    announcement_pipeline:
+      speaker: announcement_resampling_speaker
+      format: FLAC    
+      num_channels: 1  
+      sample_rate: 48000
+    media_pipeline:
+      speaker: media_resampling_speaker
+      format: FLAC     
+      num_channels: 1
+      sample_rate: 48000
+    files:
+      - id: timer_finished_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+      - id: wake_word_triggered_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
 
 voice_assistant:
   id: va
   microphone: box_mic
   media_player: box_media
-  noise_suppression_level: 4 
-  auto_gain: 3dBFS
+  noise_suppression_level: 4
+  auto_gain: 4dBFS
   volume_multiplier: 1
   on_listening:
     - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
@@ -269,6 +297,10 @@ voice_assistant:
          switch.is_on: continued_conversation
        then:
          - logger.log: "ON_TTS STREAM END 1"
+         - script.execute:
+             id: play_sound
+             priority: true
+             sound_file: !lambda return id(wake_word_triggered_sound);
          - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
          - script.execute: stt_timeout_to_idle
        else:
@@ -361,6 +393,23 @@ voice_assistant:
     - script.execute: control_led
     
 script:
+  - id: play_sound
+    parameters:
+      priority: bool
+      sound_file: "audio::AudioFile*"
+    then:
+      - lambda: |-
+          if (priority) {
+            id(box_media)
+              ->make_call()
+              .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_STOP)
+              .set_announcement(true)
+              .perform();
+          }
+          if ( (id(box_media).state != media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING ) || priority) {
+            id(box_media)
+              ->play_file(sound_file, true, false);
+          }
   - id: control_led
     then:
       - if:
@@ -432,6 +481,7 @@ script:
                 - delay: 300ms
                 - logger.log: "STT_TIMEOUT_TO_IDLE - CONDITION FINISHED"
           - script.execute: return_to_idle
+          
           
   - id: return_to_idle
 
@@ -515,7 +565,15 @@ script:
           green: 100%
           effect: "Waiting for wake word"
           brightness: 50%
-
+      - if:
+          condition:
+            lambda: return (millis() - id(last_sound_play_time) >= 15000); 
+          then:            
+            - script.execute:
+                id: play_sound
+                priority: true
+                sound_file: !lambda return id(timer_finished_sound);
+            - lambda: id(last_sound_play_time) = millis();    
   - id: control_led_voice_assist_listening_phase
     then:
       - light.turn_on:
@@ -749,7 +807,6 @@ switch:
     on_turn_on:
       - delay: 2min
       - switch.turn_off: timer_ringing
-
 
   - platform: template
     name: On Audio Start
