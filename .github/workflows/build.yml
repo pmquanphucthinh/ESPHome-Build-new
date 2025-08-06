@@ -1,17 +1,17 @@
 name: Build ESPHome Firmware
 
 on:
-  workflow_dispatch: # Chạy thủ công
+  workflow_dispatch:
   push:
     branches:
-      - main         # Tự build khi push lên nhánh main
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -28,7 +28,7 @@ jobs:
           cp .esphome/build/*/firmware.bin build_output/voiceassistant.bin
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4   # Đã cập nhật từ v3 -> v4
         with:
           name: voiceassistant-firmware
           path: build_output/voiceassistant.bin
