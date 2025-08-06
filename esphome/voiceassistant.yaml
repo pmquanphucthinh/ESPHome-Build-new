@@ -1,0 +1,939 @@
+#đây là bản có media nhưng loa hơi nhỏ và có ting khi gọi nabu
+substitutions:
+  name: "voiceassistant"
+  friendly_name: ESP32S3 Assistant
+  voice_assist_idle_phase_id: "1"
+  voice_assist_listening_phase_id: "2"
+  voice_assist_thinking_phase_id: "3"
+  voice_assist_replying_phase_id: "4"
+  voice_assist_not_ready_phase_id: "10"
+  voice_assist_error_phase_id: "11"
+  voice_assist_muted_phase_id: "12"
+  voice_assist_timer_finished_phase_id: "20"
+  allowed_characters: " !#%'()+,-./0123456789:;<>?@ABCDEFGHIJKLMNOPQRSTUVWYZ[]_abcdefghijklmnopqrstuvwxyz{|}°²³µ¿ÁÂÄÅÉÖÚßàáâãäåæçèéêëìíîðñòóôõöøùúûüýþāăąćčďĐđēėęěğĮįıļľŁłńňőřśšťũūůűųźŻżŽžơưșțΆΈΌΐΑΒΓΔΕΖΗΘΚΜΝΠΡΣΤΥΦάέήίαβγδεζηθικλμνξοπρςστυφχψωϊόύώАБВГДЕЖЗИКЛМНОПРСТУХЦЧШЪЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюяёђєіїјљњћאבגדהוזחטיכלםמןנסעפץצקרשת،ءآأإئابةتجحخدذرزسشصضطظعغفقكلمنهوىيٹپچڈکگںھہیےংকচতধনফবযরলশষস়ািু্చయలిెొ్ംഅആഇഈഉഎഓകഗങചജഞടഡണതദധനപഫബഭമയരറലളവശസഹാിീുൂെേൈ്ൺൻർൽൾაბგდევზთილმნოპრსტუფქყშჩცძჭხạảấầẩậắặẹẽếềểệỉịọỏốồổỗộớờởợụủứừửữựỳ—、一上不个中为主乾了些亮人任低佔何作供依侧係個側偵充光入全关冇冷几切到制前動區卧厅厨及口另右吊后吗启吸呀咗哪唔問啟嗎嘅嘛器圍在场執場外多大始安定客室家密寵对將小少左已帘常幫幾库度庫廊廚廳开式後恆感態成我戲戶户房所扇手打执把拔换掉控插摄整斯新明是景暗更最會有未本模機檯櫃欄次正氏水沒没洗活派温測源溫漏潮激濕灯為無煙照熱燈燥物狀玄现現瓦用發的盞目着睡私空窗立笛管節簾籬紅線红罐置聚聲脚腦腳臥色节著行衣解設調請謝警设调走路車车运連遊運過道邊部都量鎖锁門閂閉開關门闭除隱離電震霧面音頂題顏颜風风食餅餵가간감갔강개거게겨결경고공과관그금급기길깥꺼껐꼽나난내네놀누는능니다닫담대더데도동됐되된됨둡드든등디때떤뜨라래러렇렌려로료른를리림링마많명몇모무문물뭐바밝방배변보부불블빨뽑사산상색서설성세센션소쇼수스습시신실싱아안않알았애야어얼업없었에여연열옆오온완외왼요운움워원위으은을음의이인일임입있작잠장재전절정제져조족종주줄중줘지직진짐쪽차창천최추출충치침커컴켜켰쿠크키탁탄태탬터텔통트튼티파팬퍼폰표퓨플핑한함해했행혀현화활후휴힘，？"
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2025.3.3
+  #compile_process_limit: 1 # nếu buil esphome trên ras hoặc máy yếu thì xóa dấu # đầu dòng  
+  platformio_options:
+    board_build.flash_mode: dio
+  project:
+    name: ESP32S3_Assistant.Voice
+    version: '3.0.0'
+  on_boot:
+    priority: 600
+    then:
+      - script.execute: control_led
+      - delay: 30s
+      - if:
+          condition:
+            lambda: return id(init_in_progress);
+          then:
+            - lambda: id(init_in_progress) = false;
+            - script.execute: control_led
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    version: recommended 
+    sdkconfig_options:    
+      CONFIG_ESP32_S3_BOX_BOARD: "y"  
+      CONFIG_ESP32_WIFI_STATIC_RX_BUFFER_NUM: "16"
+      CONFIG_ESP32_WIFI_DYNAMIC_RX_BUFFER_NUM: "512" 
+      CONFIG_TCPIP_RECVMBOX_SIZE: "512"
+
+      CONFIG_TCP_SND_BUF_DEFAULT: "65535"
+      CONFIG_TCP_WND_DEFAULT: "512000"
+      CONFIG_TCP_RECVMBOX_SIZE: "512"      
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_AUDIO_BOARD_CUSTOM: "y"
+      CONFIG_MBEDTLS_SSL_PROTO_TLS1_3: "y"
+      CONFIG_ESP32S3_INSTRUCTION_CACHE_32KB: "y"
+      CONFIG_BT_ALLOCATION_FROM_SPIRAM_FIRST: "y"
+      CONFIG_BT_BLE_DYNAMIC_ENV_MEMORY: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+api:
+  on_client_connected:
+    - script.execute: control_led
+  on_client_disconnected:
+    - script.execute: control_led
+
+ota:
+  - platform: esphome
+    id: ota_esphome
+
+logger:
+captive_portal:
+web_server:
+  port: 80
+  auth:
+    username: "admin"
+    password: "11223344"
+wifi:
+  ssid: DiemQuanHome
+  password: Q68686868
+  output_power: 8.5dB
+  on_connect:
+    - script.execute: control_led
+  on_disconnect:
+    - script.execute: control_led
+  ap:
+    ssid: "ESP32S3 Assistant"
+    password: "11223344"
+ 
+
+button:
+  - platform: restart
+    id: "restart_device"
+    name: "Restart ESP32"
+  - platform: factory_reset
+    name: "ESP Factory Reset"
+    disabled_by_default: True
+    icon: mdi:heart-broken
+    entity_category: "config"
+light:
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    pin: GPIO9
+    num_leds: 31 #thay thành số lượng led bạn có
+    chipset: WS2812
+    name: "Status LED"
+    id: led_strip
+    disabled_by_default: True
+    entity_category: config
+    icon: mdi:led-on
+    default_transition_length: 0s
+    effects:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 250ms
+          update_interval: 250ms
+          min_brightness: 30%
+          max_brightness: 50%
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 100ms
+          update_interval: 100ms
+          min_brightness: 30%
+          max_brightness: 50%
+      - addressable_fireworks:
+          name: "Reply"
+          update_interval: 100ms
+          spark_probability: 100%
+          use_random_color: true
+          fade_out_rate: 200
+      - pulse:
+          name: "Waiting for wake word"
+          min_brightness:  15%
+          max_brightness: 35%
+          transition_length: 3s     
+          update_interval: 3s
+      - addressable_scan:
+          name: "Scanning"
+          move_interval: 70ms
+          scan_width: 1
+
+micro_wake_word:
+  vad:
+  models: 
+    - model: okay_nabu
+  on_wake_word_detected:
+   - media_player.stop:
+   - if:
+        condition:
+          switch.is_on: continued_conversation
+        then:
+          - logger.log: "MICRO WAKE WORD - CONTINUOUS"
+          - lambda: id(va).set_use_wake_word(false);
+          - script.execute:
+              id: play_sound
+              priority: true
+              sound_file: !lambda return id(wake_word_triggered_sound);
+          - delay: 300ms
+          - voice_assistant.start_continuous:
+        else:
+          - logger.log: "MICRO WAKE WORD - START"
+          - lambda: id(va).set_use_wake_word(false);
+          - script.execute:
+              id: play_sound
+              priority: true
+              sound_file: !lambda return id(wake_word_triggered_sound);
+          - delay: 300ms
+          - voice_assistant.start:
+             wake_word: !lambda return wake_word;
+ 
+i2s_audio:
+  - id: i2s_in
+    i2s_lrclk_pin: GPIO8  #WS module mic
+    i2s_bclk_pin: GPIO18  #SCK module mic
+  - id: i2s_out
+    i2s_lrclk_pin: GPIO15  #LRC module loa
+    i2s_bclk_pin: GPIO16   #BLCK module loa
+    #sample_rate: 48000
+microphone:
+  - platform: i2s_audio
+    id: box_mic
+    adc_type: external
+    i2s_audio_id: i2s_in
+    i2s_din_pin: GPIO10 #SD module mic
+    pdm: false
+    channel: left #đổi right thành left nếu nói mic không nhận
+    bits_per_sample: 32 bit
+
+speaker:
+  - platform: i2s_audio
+    id: box_speaker
+    sample_rate: 48000
+    i2s_mode: primary
+    bits_per_sample: 16 bit
+    dac_type: external
+    i2s_audio_id: i2s_out
+    i2s_dout_pin: GPIO17 #DIN module Loa
+    channel: mono
+    buffer_duration: 1000ms
+  - platform: mixer
+    id: mixing_speaker
+    output_speaker: box_speaker
+    num_channels: 2
+    source_speakers:
+      - id: announcement_mixing_input
+        timeout: never
+      - id: media_mixing_input
+        timeout: never
+  - platform: resampler
+    id: announcement_resampling_speaker
+    output_speaker: announcement_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+  - platform: resampler
+    id: media_resampling_speaker
+    output_speaker: media_mixing_input
+    sample_rate: 48000
+    bits_per_sample: 16
+media_player:
+  - platform: speaker
+    id: box_media
+    name: S3 Media Player
+    internal: False
+    volume_increment: 0.05
+    volume_min: 0.4
+    volume_max: 0.95
+    announcement_pipeline:
+      speaker: announcement_resampling_speaker
+      format: FLAC    
+      num_channels: 1  
+      sample_rate: 48000
+    media_pipeline:
+      speaker: media_resampling_speaker
+      format: FLAC     
+      num_channels: 1
+      sample_rate: 48000
+    files:
+      - id: timer_finished_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/timer_finished.flac
+      - id: wake_word_triggered_sound
+        file: https://github.com/esphome/home-assistant-voice-pe/raw/dev/sounds/wake_word_triggered.flac
+
+voice_assistant:
+  id: va
+  microphone: box_mic
+  media_player: box_media
+  noise_suppression_level: 4
+  auto_gain: 4dBFS
+  volume_multiplier: 1
+  on_listening:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+    - logger.log: "ON-LISTENING"
+    - text_sensor.template.publish:
+        id: text_request
+        state: "..."
+    - text_sensor.template.publish:
+        id: text_response
+        state: "..."
+    - if:
+        condition:
+          switch.is_on: continued_conversation
+        then:
+          - script.execute: stt_timeout_to_idle
+          - lambda: id(va).set_use_wake_word(false); 
+    - script.execute: control_led
+  on_stt_vad_end:
+    - lambda: id(voice_assistant_phase) = ${voice_assist_thinking_phase_id};
+    - logger.log: "ON STT VAD END"
+    - if:
+        condition:
+          switch.is_on: continued_conversation
+        then:
+          - script.execute: stt_timeout_to_idle
+    - script.execute: control_led
+  on_stt_end:
+    - logger.log: "ON STT END"
+    - text_sensor.template.publish:
+        id: text_request
+        state: !lambda return x;
+  on_tts_end:       
+   - lambda: id(voice_assistant_phase) = ${voice_assist_replying_phase_id};
+   - logger.log: "ON TTS STREAM START"
+   - script.execute: control_led
+   - wait_until:
+       media_player.is_playing:
+   - wait_until:
+       not:
+         media_player.is_playing:
+   - logger.log: "ON_TTS STREAM END"
+   - if:
+       condition:
+         switch.is_on: continued_conversation
+       then:
+         - logger.log: "ON_TTS STREAM END 1"
+         - script.execute:
+             id: play_sound
+             priority: true
+             sound_file: !lambda return id(wake_word_triggered_sound);
+         - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
+         - script.execute: stt_timeout_to_idle
+       else:
+         - logger.log: "ON_TTS STREAM END 2"
+         - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+
+   - script.execute: control_led
+  on_tts_start:
+    - logger.log: "ON TTS START"
+    - text_sensor.template.publish:
+        id: text_response
+        state: !lambda return x;
+
+  on_end:
+    - logger.log: "ON_END"
+    - if:
+        condition:
+          and:
+            - switch.is_off: mute
+            - lambda: return id(wake_word_engine_location).state == "On device";
+        then:
+          - script.execute: stt_timeout_to_idle
+
+  on_error:
+    - logger.log: "ON_ERROR"
+    - if:
+        condition:
+          and:
+            - lambda: return !id(init_in_progress);
+            - lambda: return !(code == "stt-no-text-recognized");
+        then:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_error_phase_id};
+          - script.execute: control_led
+          - delay: 1s
+          - script.stop: stt_timeout_to_idle
+          - if:
+              condition:
+                switch.is_off: mute
+              then:
+                - script.execute: return_to_idle
+              else:
+                - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};                
+          - script.execute: control_led
+  on_client_connected:
+    - if:
+        condition:
+          switch.is_off: mute
+        then:
+          - script.execute: return_to_idle
+        else:
+          - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};    
+    - lambda: id(init_in_progress) = false;
+    - script.execute: control_led
+  on_client_disconnected:
+    - if:
+        condition:
+          lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+        then:
+          - lambda: id(va).set_use_wake_word(false);
+          - voice_assistant.stop:
+    - if:
+        condition:
+          lambda: return id(wake_word_engine_location).state == "On device";
+        then:
+          - micro_wake_word.stop
+    - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};    
+    - script.execute: control_led
+  on_timer_started:
+    - script.execute: control_led
+  on_timer_cancelled:
+    - script.execute: control_led
+  on_timer_updated:
+    - script.execute: control_led
+  on_timer_tick:
+    - script.execute: control_led
+  on_timer_finished:
+    - script.execute: stop_voice_assistant
+    - lambda: id(voice_assistant_phase) = ${voice_assist_timer_finished_phase_id};
+    - switch.turn_on: timer_ringing
+    - script.execute: control_led
+    - wait_until:
+        not:
+          microphone.is_capturing:
+    - wait_until:
+        not:
+          media_player.is_playing:
+            id: box_media
+    - switch.turn_off: timer_ringing
+    - script.execute: start_voice_assistant
+    - script.execute: control_led
+    
+script:
+  - id: play_sound
+    parameters:
+      priority: bool
+      sound_file: "audio::AudioFile*"
+    then:
+      - lambda: |-
+          if (priority) {
+            id(box_media)
+              ->make_call()
+              .set_command(media_player::MediaPlayerCommand::MEDIA_PLAYER_COMMAND_STOP)
+              .set_announcement(true)
+              .perform();
+          }
+          if ( (id(box_media).state != media_player::MediaPlayerState::MEDIA_PLAYER_STATE_ANNOUNCING ) || priority) {
+            id(box_media)
+              ->play_file(sound_file, true, false);
+          }
+  - id: control_led
+    then:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - if:
+                condition:
+                  wifi.connected:
+                then:
+                  - if:
+                      condition:
+                        api.connected:
+                      then:
+                        - lambda: |
+                            switch(id(voice_assistant_phase)) {
+                              case ${voice_assist_listening_phase_id}:
+                                id(control_led_voice_assist_listening_phase).execute();
+                                break;
+                              case ${voice_assist_thinking_phase_id}:
+                                id(control_led_voice_assist_thinking_phase).execute();
+                                break;
+                              case ${voice_assist_replying_phase_id}:
+                                id(control_led_voice_assist_replying_phase).execute();
+                                break;
+                              case ${voice_assist_error_phase_id}:
+                                id(control_led_voice_assist_error_phase).execute();
+                                break;
+                              case ${voice_assist_muted_phase_id}:
+                                id(control_led_voice_assist_muted_phase).execute();
+                                break;
+                              case ${voice_assist_not_ready_phase_id}:
+                                id(control_led_voice_assist_not_ready_phase).execute();
+                                break;
+                              case ${voice_assist_timer_finished_phase_id}:
+                                id(control_led_voice_assist_timer_finished_phase).execute();
+                                break;
+                              default:
+                                id(control_led_voice_assist_idle_phase).execute();
+                                break;
+                            }
+                      else:
+                        - script.execute: control_led_no_ha_connection_state
+                else:
+                  - script.execute: control_led_no_ha_connection_state
+          else:
+            - script.execute: control_led_init_state
+
+  - id: stt_timeout_to_idle
+    mode: restart
+    then:
+      if:
+        condition:
+          switch.is_on: continued_conversation
+        then:
+          - logger.log:
+              format: "THE TIME OUT IS %.1f SECONDS"
+              args: [ 'id(continued_timeout).state' ]
+          - delay: !lambda "return id(continued_timeout).state * 1000;"
+          - logger.log: "SCRIPT - STT_TIMEOUT_TO_IDLE"
+          - if:
+              condition:
+                lambda: return (id(voice_assistant_phase) == ${voice_assist_replying_phase_id});
+              then:
+                - wait_until:
+                    condition:
+                      lambda: return !(id(voice_assistant_phase) == ${voice_assist_replying_phase_id});
+                    timeout: 90s
+                - delay: 300ms
+                - logger.log: "STT_TIMEOUT_TO_IDLE - CONDITION FINISHED"
+          - script.execute: return_to_idle
+          
+          
+  - id: return_to_idle
+
+    then:
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "On device";
+          then:
+            - logger.log: "SCRIPT - RETURN_TO_IDLE 1"
+            - script.stop: stt_timeout_to_idle
+            - if:
+                condition:
+                  voice_assistant.is_running
+                then:
+                  - lambda: id(va).set_use_wake_word(false);
+                  - voice_assistant.stop
+
+                  - wait_until:
+                      condition:
+                        not:
+                          voice_assistant.is_running
+                      timeout: 10s
+            - if:
+                condition:
+                  not:
+                    micro_wake_word.is_running
+                then:
+                  - micro_wake_word.start:
+
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+          then:
+            - logger.log: "SCRIPT - RETURN_TO_IDLE 2"
+            - if:
+                condition:
+                  micro_wake_word.is_running
+                then:
+                  - micro_wake_word.stop:
+                  - wait_until:
+                      condition:
+                        not:
+                          micro_wake_word.is_running
+                      timeout: 10s
+            - wait_until:
+                condition:
+                  not:
+                    voice_assistant.is_running
+                timeout: 10s
+            - lambda: id(va).set_use_wake_word(true);
+            - if:
+                condition:
+                  - not:
+                      voice_assistant.is_running
+                then:
+                  - voice_assistant.start_continuous:
+      - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id}; 
+      - script.execute: control_led     
+
+  - id: control_led_init_state
+    then:
+      - light.turn_on:
+          id: led_strip
+          blue: 0%
+          red: 0%
+          green: 100%
+          brightness: 50%
+          effect: "Fast Pulse"
+ 
+  - id: control_led_no_ha_connection_state
+    then:
+      - light.turn_off:
+          id: led_strip  
+
+  - id: control_led_voice_assist_idle_phase
+    then:
+      - light.turn_on:
+          id: led_strip
+          blue: 10%
+          red: 10%
+          green: 100%
+          effect: "Waiting for wake word"
+          brightness: 50%
+      - if:
+          condition:
+            lambda: return (millis() - id(last_sound_play_time) >= 15000); 
+          then:            
+            - script.execute:
+                id: play_sound
+                priority: true
+                sound_file: !lambda return id(timer_finished_sound);
+            - lambda: id(last_sound_play_time) = millis();    
+  - id: control_led_voice_assist_listening_phase
+    then:
+      - light.turn_on:
+          id: led_strip
+          blue: 100%
+          red: 0%
+          green: 0%
+          brightness: 50%
+          effect: "Scanning"
+
+  - id: control_led_voice_assist_thinking_phase
+    then:
+      - light.turn_on:
+          id: led_strip
+          blue: 100%
+          red: 30%
+          green: 30%
+          brightness: 50%
+          effect: "Fast Pulse"
+
+  - id: control_led_voice_assist_replying_phase
+    then:
+      - light.turn_on:
+          id: led_strip
+          blue: 100%
+          red: 0%
+          green: 0%
+          brightness: 50%
+          effect: "Reply"
+
+  - id: control_led_voice_assist_error_phase
+    then:
+      - light.turn_on:
+          id: led_strip
+          blue: 0%
+          red: 100%
+          green: 0%
+          brightness: 50%
+          effect: "none"
+  - id: control_led_voice_assist_muted_phase
+    then:
+      - light.turn_off:
+          id: led_strip
+
+  - id: control_led_voice_assist_not_ready_phase
+    then:
+      - light.turn_off:
+          id: led_strip
+
+  - id: control_led_voice_assist_timer_finished_phase
+    then:
+      - light.turn_on:
+          id: led_strip
+          blue: 50%
+          red: 50%
+          green: 50%
+          brightness: 50%
+          effect: "Fast Pulse"
+
+  - id: check_if_timers_active
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          bool output = false;
+          if (timers.size() > 0) {
+            for (auto &iterable_timer : timers) {
+              if(iterable_timer.second.is_active) {
+                output = true;
+              }
+            }
+          }
+          id(global_is_timer_active) = output;
+
+  - id: check_if_timers
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          bool output = false;
+          if (timers.size() > 0) {
+            output = true;
+          }
+          id(global_is_timer) = output;
+
+  - id: timer_by_index
+    then:
+      - lambda: |
+          const auto timers = id(va).get_timers();
+          auto timer_id = 0;
+          if (timers.size() > 0) {
+            for (auto &iterable_timer : timers) {
+              if(iterable_timer.second.is_active) {
+                if(timer_id == id(timer_list).active_index() ) {
+                   id(global_first_active_timer) = iterable_timer.second;
+                }
+               }
+               timer_id++;
+            }
+          }
+
+  - id: active_timer_widget
+    then:
+      - lambda: |
+          id(check_if_timers_active).execute();
+          if (id(global_is_timer_active)){
+            id(timer_by_index).execute();
+            int hours_left = floor(id(global_first_active_timer).seconds_left / 3600);
+            int minutes_left = floor((id(global_first_active_timer).seconds_left - hours_left * 3600) / 60);
+            int seconds_left = id(global_first_active_timer).seconds_left - hours_left * 3600 - minutes_left * 60 ;
+            auto display_hours = (hours_left < 10 ? "0" : "") + std::to_string(hours_left);
+            auto display_minute = (minutes_left < 10 ? "0" : "") + std::to_string(minutes_left);
+            auto display_seconds = (seconds_left  < 10 ? "0" : "") + std::to_string(seconds_left) ;
+            std::string display_string = "";
+            if (hours_left > 0) {
+              display_string = display_hours + ":" + display_minute;
+            } else {
+              display_string = display_minute + ":" + display_seconds;
+            }
+            id(text_timer).publish_state(display_string.c_str());
+          }
+          else {
+            id(text_timer).publish_state("--:--");
+          }
+
+  - id: start_voice_assistant
+    then:
+      - if:
+          condition:
+            switch.is_off: mute
+          then:
+            - logger.log: "START_VOICE_ASSISTANT 1"
+            - if:
+                condition:
+                  lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                then:
+                  - logger.log: "start_voice_assistant STARTED 1"
+                  - lambda: id(va).set_use_wake_word(true);
+                  - voice_assistant.start_continuous:
+            - if:
+                condition:
+                  lambda: return id(wake_word_engine_location).state == "On device";
+                then:
+                  - logger.log: "start_voice_assistant STARTED 2"
+                  - lambda: id(va).set_use_wake_word(false);
+                  - micro_wake_word.start
+            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+          else:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+            - logger.log: "START_VOICE_ASSISTANT 2"
+
+  - id: stop_voice_assistant
+    then:
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+          then:
+            - logger.log: "STOP_VOICE_ASSISTANT 1"
+            - lambda: id(va).set_use_wake_word(false);
+            - voice_assistant.stop:
+      - if:
+          condition:
+            lambda: return id(wake_word_engine_location).state == "On device";
+          then:
+            - logger.log: "STOP_VOICE_ASSISTANT 2"
+            - voice_assistant.stop:
+            - micro_wake_word.stop:
+      - lambda: id(voice_assistant_phase) = ${voice_assist_not_ready_phase_id};
+
+number:
+  - platform: template
+    entity_category: config
+    name: Continued timeout
+    id: continued_timeout
+    icon: mdi:clock
+    optimistic: true
+    restore_value: true
+    initial_value: 4
+    min_value: 1
+    step: 1
+    max_value: 20
+    unit_of_measurement: s
+    mode: slider
+
+switch:
+  - platform: template
+    name: Mute
+    id: mute
+    icon: "mdi:microphone-off"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    entity_category: config
+    on_turn_off:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
+            - if:
+                condition:
+                  not:
+                    - voice_assistant.is_running
+                then:
+                  - if:
+                      condition:
+                        lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                      then:
+                        - lambda: id(va).set_use_wake_word(true);
+                        - voice_assistant.start_continuous
+                  - if:
+                      condition:
+                        lambda: return id(wake_word_engine_location).state == "On device";
+                      then:
+                        - lambda: id(va).set_use_wake_word(false);
+                        - micro_wake_word.start
+            - script.execute: control_led
+    on_turn_on:
+      - if:
+          condition:
+            lambda: return !id(init_in_progress);
+          then:
+            - lambda: id(va).set_use_wake_word(false);
+            - voice_assistant.stop
+            - micro_wake_word.stop
+            - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
+            - script.execute: control_led
+
+  - platform: template
+    id: timer_ringing
+    optimistic: true
+    internal: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - delay: 2min
+      - switch.turn_off: timer_ringing
+
+  - platform: template
+    name: On Audio Start
+    id: wake_up_bell
+    optimistic: true
+    internal: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    icon: mdi:bell
+  - platform: template
+    name: On Audio End
+    id: endaudio
+    internal: true
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    icon: mdi:bell
+  - platform: template
+    name: Continued conversation
+    id: continued_conversation
+    optimistic: true
+    #internal: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+    on_turn_off:
+      - script.execute: return_to_idle
+    on_turn_on:
+      - script.execute: return_to_idle
+
+select:
+  - platform: template
+    entity_category: config
+    name: Wake word engine location
+    id: wake_word_engine_location
+    optimistic: true
+    restore_value: true
+    options:
+      - In Home Assistant
+      - On device
+    initial_option: On device
+    on_value:
+      - wait_until:
+          lambda: return id(voice_assistant_phase) == ${voice_assist_muted_phase_id} || id(voice_assistant_phase) == ${voice_assist_idle_phase_id};
+      - script.execute: return_to_idle
+
+
+  - platform: template
+    internal: true
+    name: Show Timer
+    id: timer_list
+    icon: "mdi:account-voice"
+    optimistic: true
+    restore_value: true
+    options:
+      - "Timer 1"
+      - "Timer 2"
+      - "Timer 3"
+      - "Timer 4"
+    initial_option: "Timer 1"
+    on_value:
+      - logger.log: 
+          format: "# of timer: %d - Index: %d"
+          args: ["id(va).get_timers().size()", "i"]  
+
+globals:
+  - id: init_in_progress
+    type: bool
+    restore_value: false
+    initial_value: "true"
+  - id: voice_assistant_phase
+    type: int
+    restore_value: false
+    initial_value: ${voice_assist_not_ready_phase_id}
+  - id: global_first_active_timer
+    type: voice_assistant::Timer
+    restore_value: false
+  - id: global_is_timer_active
+    type: bool
+    restore_value: false
+  - id: global_first_timer
+    type: voice_assistant::Timer
+    restore_value: false
+  - id: global_is_timer
+    type: bool
+    restore_value: false
+  - id: last_sound_play_time
+    type: unsigned long
+    restore_value: false
+    initial_value: '0'
+text_sensor:
+  - id: text_request
+    name: Request
+    platform: template
+    icon: mdi:ear-hearing
+    on_value:
+      lambda: |-
+        if(id(text_request).state.length()>32) {
+          std::string name = id(text_request).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),31);
+          id(text_request).state = (truncated+"...").c_str();
+        }	
+  - id: text_response
+    name: Response
+    platform: template
+    icon: mdi:react
+    on_value:
+      lambda: |-
+        if(id(text_response).state.length()>300) {
+          std::string name = id(text_response).state.c_str();
+          std::string truncated = esphome::str_truncate(name.c_str(),299);
+          id(text_response).state = (truncated+"...").c_str();
+        }	
+  - id: text_timer
+    name: Timer
+    platform: template
+    icon: mdi:camera-timer
+  - platform: wifi_info
+    ip_address:
+      name: IP
+
+sensor: 
+  - platform: internal_temperature
+    name: "Temperature"
+    update_interval: 60s
+binary_sensor:
+  - platform: status
+    name: Status 
+
+    
+    
