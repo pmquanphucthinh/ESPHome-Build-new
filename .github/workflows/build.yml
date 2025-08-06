@@ -25,8 +25,8 @@ jobs:
         run: |
           mkdir -p build_output
           esphome compile esphome/voiceassistant.yaml
-          cp .esphome/build/*/.pioenvs/*/firmware.bin build_output/voiceassistant.ota.bin
-          cp .esphome/build/*/.pioenvs/*/firmware.factory.bin build_output/voiceassistant.factory.bin
+          cp .pioenvs/voiceassistant/firmware.bin build_output/firmware.bin
+          cp /home/runner/work/ESPHome-Build-new/ESPHome-Build-new/esphome/.esphome/build/voiceassistant/.pioenvs/voiceassistant/firmware.factory.bin build_output/firmware.factory.bin
 
 
       - name: Upload artifact
