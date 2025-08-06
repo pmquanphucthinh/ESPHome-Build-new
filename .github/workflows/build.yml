@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install ESPHome
-        run: pip install esphome
+        run: pip install esphome==2025.4.2  # ✅ Chốt phiên bản cụ thể
 
       - name: Compile firmware
         run: |
@@ -27,9 +27,8 @@ jobs:
           esphome compile esphome/voiceassistant.yaml
           cp /home/runner/work/ESPHome-Build-new/ESPHome-Build-new/esphome/.esphome/build/voiceassistant/.pioenvs/voiceassistant/firmware.factory.bin build_output/firmware.factory.bin
 
-
       - name: Upload artifact
-        uses: actions/upload-artifact@v4   # Đã cập nhật từ v3 -> v4
+        uses: actions/upload-artifact@v4
         with:
           name: voiceassistant-firmware
           path: build_output/firmware.factory.bin
