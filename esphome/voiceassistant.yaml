@@ -97,8 +97,8 @@ logger:
 #  hardware_uart: USB_SERIAL_JTAG
 
 wifi:
-  ssid: DiemQuanHome
-  password: Q68686868
+  ssid: "DiemQuanHome"
+  password: "Q68686868"
   output_power: 8.5dB
 
   # If the device connects, or disconnects, to the Wifi: Run the script to refresh the LED status
@@ -109,8 +109,8 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: VoiceAssit
-    password: Q68686868
+    ssid: "VoiceAssit"
+    password: "Q68686868"
  
 
 button: # Diagnotiscs
