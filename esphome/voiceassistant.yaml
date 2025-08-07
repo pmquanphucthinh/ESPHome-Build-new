@@ -35,6 +35,7 @@ esphome:
   min_version: 2024.7.0
   compile_process_limit: 1 # Helps when compiling on light weight systems  
   platformio_options:
+    platform: espressif32@6.2.0
     board_build.flash_mode: dio
   project:
     name: AA_van_Zoelen.VoicePuck
