@@ -82,7 +82,7 @@ external_components:
 
 api:
   encryption:
-    key: !secret api_key # "0RpjwjYTywc+fIkRoV78gPaRJ6E/wDzCAJ3X8a/HZJE="
+    key: 0RpjwjYTywc+fIkRoV78gPaRJ6E/wDzCAJ3X8a/HZJE=
   on_client_connected:
     - script.execute: control_led
   on_client_disconnected:
@@ -96,8 +96,8 @@ logger:
 #  hardware_uart: USB_SERIAL_JTAG
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+  ssid: DiemQuanHome
+  password: Q68686868
   output_power: 8.5dB
 
   # If the device connects, or disconnects, to the Wifi: Run the script to refresh the LED status
@@ -108,8 +108,8 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: !secret fallback_ssid
-    password: !secret fallback_password
+    ssid: VoiceAssit
+    password: Q68686868
  
 
 button: # Diagnotiscs
