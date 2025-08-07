@@ -121,15 +121,14 @@ button: # Diagnotiscs
 
 
 light:
-  - platform: esp32_rmt_led_strip
-    rgb_order: GRB
-    pin: GPIO17 #GPIO48 # On board light
-    num_leds: 3
-    rmt_channel: 0
+  - platform: fastled_clockless
     chipset: WS2812
+    pin: GPIO17
+    num_leds: 3
+    rgb_order: GRB
     name: "Status LED"
     id: led_strip
-    disabled_by_default: True
+    disabled_by_default: true
     entity_category: config
     icon: mdi:led-on
     default_transition_length: 0s
@@ -152,9 +151,9 @@ light:
           scan_width: 1
       - pulse:
           name: "Waiting for wake word"
-          min_brightness:  15%
+          min_brightness: 15%
           max_brightness: 35%
-          transition_length: 3s      # defaults to 1s
+          transition_length: 3s
           update_interval: 3s
 
 
