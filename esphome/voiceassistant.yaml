@@ -147,7 +147,7 @@ light:
 micro_wake_word:
   vad:
   models: 
-    - model: okay_nabu
+    - model: alexa
   on_wake_word_detected:
    - media_player.stop:
    - logger.log: "MICRO WAKE WORD - START"
