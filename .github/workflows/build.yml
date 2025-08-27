@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install ESPHome
-        run: pip install esphome==2025.4.2  # ✅ Chốt phiên bản cụ thể
+        run: pip install esphome
 
       - name: Compile firmware
         run: |
