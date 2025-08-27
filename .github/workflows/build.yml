@@ -11,21 +11,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install ESPHome
-        run: pip install esphome
+        run: pip install --upgrade esphome
 
       - name: Compile firmware
         run: |
           mkdir -p build_output
           esphome compile esphome/voiceassistant.yaml
-          cp /home/runner/work/ESPHome-Build-new/ESPHome-Build-new/esphome/.esphome/build/voiceassistant/.pioenvs/voiceassistant/firmware.factory.bin build_output/firmware.factory.bin
+          # Lấy file factory.bin mới nhất trong .esphome/build
+          BIN_PATH=$(find esphome/.esphome/build \
+            -type f \
+            -path "*/.pioenvs/*/firmware.factory.bin" \
+            -printf '%T@ %p\n' | sort -nr | head -n1 | cut -d' ' -f2-)
+          if [ -z "$BIN_PATH" ]; then
+            echo "❌ Không tìm thấy firmware.factory.bin sau khi build."
+            exit 1
+          fi
+          echo "✅ Found: $BIN_PATH"
+          cp "$BIN_PATH" build_output/firmware.factory.bin
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
