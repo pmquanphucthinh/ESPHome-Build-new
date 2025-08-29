@@ -1,40 +1,14 @@
 substitutions:
-  name: esphome-web-616450
-  friendly_name: xingzhi-cube-1.54
-
-## v1.05 25-jul-2025 #############################################################################################################################
-## Added: Support for Xingzhi Cube 1.45 and added startup sound (optional switch in HA)
-## v1.04 15-jul-2025 #############################################################################################################################
-## Added: optional wake sound, delays the time before listening, so optional switch in HA.
-## Moved: show_text and show_battery_status to switches in HA.
-## v1.03 11-jul-2025 #############################################################################################################################
-## Added: optional show text boxes
+  name: esphome-web-pnp
+  friendly_name: Xiaozhi Breadboard Mini
 
 #####SETTINGS:####################################################################################################################################
 
-  imagemodel: "Luffy" # (options are: Alfred,Astrobot,Buzz,Casita,Cybergirl,Dory,EVE,Eyes,Eyes2,GLaDOS,Girl1,Guy1,Guy2,Gwen,Harley,Jarvis,Luffy,Mario,Max,Prime,Robochibi,Robocop,Robot,Robotgirl,Shaun)
+  imagemodel: "Eyes2" # (options are: Eyes2)
   startup_sound: "Home_Connected" # (options are: available,Home_Connected)
 
-  imagewidth: "240" # ILI9341 (breadboard 2.4") "240" or GC9A01A (Ball v1) "240" or ST7789V (Xingzhi Cube) "240"
-  imageheight: "240" # ILI9341 (breadboard 2.4") "320" or GC9A01A (Ball v1) "240" or ST7789V (Xingzhi Cube) "240"
-  displaymodel: "ST7789V" # ILI9341 (breadboard 2.4"), GC9A01A (Ball v1) or ST7789V (Xingzhi Cube)
-  invertcolors: "true" # ILI9341 (breadboard 2.4") "false" or GC9A01A (Ball v1) "true" or ST7789V (Xingzhi Cube) "true"
-
-###### Uncomment for breadboard 2.4" & Ball v1
-#  backlight_output_pin: "3" # Display Backlight
-#  lcd_cs_pin: "13"          # Display CS (Chip Select)
-#  lcd_dc_pin: "10"          # Display DC (Data/Command)
-#  lcd_reset_pin: "18"       # Display Reset
-#  spi_clk_pin: "14"         # SPI Clock
-#  spi_mosi_pin: "17"        # SPI MOSI (Data Out)
-
-###### Uncomment for Xingzhi Cube 1,54
-  backlight_output_pin: "13" # Display Backlight
-  lcd_cs_pin: "14"           # Display CS (Chip Select)
-  lcd_dc_pin: "8"            # Display DC (Data/Command)
-  lcd_reset_pin: "18"        # Display Reset
-  spi_clk_pin: "9"           # SPI Clock
-  spi_mosi_pin: "10"         # SPI MOSI (Data Out)
+  imagewidth: "128" # ILI9341 (breadboard 2.4") "240" or GC9A01A (Ball v1) "240" or ST7789V (Xingzhi Cube) "240"
+  imageheight: "64" # ILI9341 (breadboard 2.4") "320" or GC9A01A (Ball v1) "240" or ST7789V (Xingzhi Cube) "240"
 
 #####END OF SETTINGS##############################################################################################################################
 
@@ -82,7 +56,6 @@ esphome:
   on_boot:
     priority: 600
     then:
-      - light.turn_on: Sled
       - script.execute: draw_display
       - delay: 30s
       - if:
@@ -208,21 +181,7 @@ binary_sensor:
     on_release:
       - logger.log: "Button was released"
 
-output:
-  - platform: ledc
-    id: backlight_output
-    pin:
-      number: ${backlight_output_pin}
-
 light:
-  - platform: monochromatic
-    id: Sled
-    name: Screen
-    icon: "mdi:television"
-    entity_category: config
-    output: backlight_output
-    restore_mode: RESTORE_DEFAULT_ON
-    default_transition_length: 250ms
   - platform: esp32_rmt_led_strip
     id: led
     name: none
@@ -968,7 +927,7 @@ font:
       weight: 300
       italic: true
     id: font_request
-    size: 15
+    size: 10
     glyphsets:
       - ${font_glyphsets}
   - file:
@@ -976,7 +935,7 @@ font:
       family: ${font_family}
       weight: 300
     id: font_response
-    size: 15
+    size: 10
     glyphsets:
       - ${font_glyphsets}
   - file:
@@ -1027,24 +986,20 @@ color:
   - id: paused_timer_color
     hex: "3b89e3"
 
-spi:
-  - id: spi_bus
-    clk_pin: ${spi_clk_pin}
-    mosi_pin: ${spi_mosi_pin}
+i2c:
+  sda: 41
+  scl: 42
+  frequency: 800kHz
 
 display:
-  - platform: ili9xxx
+  - platform: ssd1306_i2c
     id: s3_box_lcd
-    model: ${displaymodel}
-    invert_colors: ${invertcolors}
-    data_rate: 40MHz
-    cs_pin: ${lcd_cs_pin}
-    dc_pin: ${lcd_dc_pin}
-    reset_pin: ${lcd_reset_pin}
-    update_interval: never
-    dimensions:
-        height: ${imageheight}
-        width: ${imagewidth}
+    model: "SH1106 128x64"
+    address: 0x3C
+    update_interval: 5s
+    contrast: 60%
+    auto_clear_enabled: true
+
     pages:
       - id: idle_page
         lambda: |-
@@ -1062,23 +1017,19 @@ display:
           it.fill(id(thinking_color));
           it.image((it.get_width() / 2), (it.get_height() / 2), id(casita_thinking), ImageAlign::CENTER);
           if (id(show_text).state) {
-            it.filled_rectangle(20 , 20 , 200 , 30 , Color::WHITE );
-            it.rectangle(20 , 20 , 200 , 30 , Color::BLACK );
-            it.printf(30, 25, id(font_request), Color::BLACK, "%s", id(text_request).state.c_str());
+            it.filled_rectangle(14 , 20 , 100 , 14 , Color::WHITE );
+            it.rectangle(14 , 20 , 100 , 14 , Color::BLACK );
+            it.printf(16, 22, id(font_request), Color::BLACK, "%s", id(text_request).state.c_str());
           }
           id(draw_timer_timeline).execute();
       - id: replying_page
         lambda: |-
           it.fill(id(replying_color));
           it.image((it.get_width() / 2), (it.get_height() / 2), id(casita_replying), ImageAlign::CENTER);
-          int y_offset = 190; // default for 240px display
-          if (it.get_height() == 320) {
-            y_offset = 270; // Move box lower for 320px tall screens
-          }
           if (id(show_text).state) {
-            it.filled_rectangle(20, y_offset, 200, 30, Color::WHITE);
-            it.rectangle(20, y_offset, 200, 30, Color::BLACK);
-            it.printf(30, y_offset + 5, id(font_response), Color::BLACK, "%s", id(text_response).state.c_str());
+            it.filled_rectangle(14, 50, 100, 14, Color::WHITE);
+            it.rectangle(14, 50, 100, 14, Color::BLACK);
+            it.printf(16, 52, id(font_request), Color::BLACK, "%s", id(text_response).state.c_str());
           }
           id(draw_timer_timeline).execute();
       - id: timer_finished_page
